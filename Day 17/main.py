@@ -14,5 +14,5 @@ quiz = Quiz(question_bank)
 while quiz.has_questions():
     quiz.next_question()
 
-print("\n\nYou've completed the quiz.")
+print("\nYou've completed the quiz.")
 print(f"Your final score is: {quiz.score}/{quiz.question_number}")
