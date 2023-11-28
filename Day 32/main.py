@@ -1,51 +1,29 @@
-import smtplib
-import datetime as dt
-import random
 import os
+from datetime import datetime
+import pandas
+import random
+import smtplib
 
 MY_EMAIL = os.environ['MY_EMAIL']
 MY_PASSWORD = os.environ['MY_PASSWORD']
 
-now = dt.datetime.now()
-weekday = now.weekday()
-print(weekday)
-if weekday == 3:
-    with open("quotes.txt") as quote_file:
-        all_quotes = quote_file.readlines()
-        quote = random.choice(all_quotes)
+today = datetime.now()
+today_tuple = (today.month, today.day)
 
-    print(quote)
-    with smtplib.SMTP("smtp.gmail.com") as server:
-        server.starttls()
-        server.login(MY_EMAIL, MY_PASSWORD)
-        server.sendmail(from_addr=MY_EMAIL,
-                        to_addrs=MY_EMAIL,
-                        msg=f"Subject:Monday Motivation\n\n{quote}")
+data = pandas.read_csv("birthdays.csv")
+birthdays_dict = {(data_row["month"], data_row["day"]): data_row for (index, data_row) in data.iterrows()}
+if today_tuple in birthdays_dict:
+    birthday_person = birthdays_dict[today_tuple]
+    file_path = f"letter_templates/letter_{random.randint(1, 3)}.txt"
+    with open(file_path) as letter_file:
+        contents = letter_file.read()
+        contents = contents.replace("[NAME]", birthday_person["name"])
 
-# import smtplib
-#
-# sender = "Person <from@example.com>"
-# receiver = "A Test User <to@example.com>"
-#
-# message = f"""\
-# Subject: Hello
-# To: {receiver}
-# From: {sender}
-#
-# This is a test e-mail message."""
-#
-# with smtplib.SMTP("sandbox.smtp.mailtrap.io", 2525) as server:
-#     server.login("*******", "*********")
-#     server.sendmail(sender, receiver, message)
-
-# import datetime as dt
-#
-# now = dt.datetime.now()
-# year = now.year
-# month = now.month
-# day_of_week = now.weekday()
-#
-# date_of_birth = dt.datetime(year=1995, month=12, day=10)
-# print(date_of_birth)
-#
-# print(day_of_week)
+    with smtplib.SMTP("smtp.gmail.com") as connection:
+        connection.starttls()
+        connection.login(MY_EMAIL, MY_PASSWORD)
+        connection.sendmail(
+            from_addr=MY_EMAIL,
+            to_addrs=birthday_person["email"],
+            msg=f"Subject:Happy Birthday!\n\n{contents}"
+        )
